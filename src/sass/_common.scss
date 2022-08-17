@@ -13,11 +13,13 @@ body {
     color: #212121;
     line-height: 1.5;
 
+    background-image: radial-gradient(rgb(128, 128, 128) 5%, transparent 0);
+    background-size: 20px 20px;
+
 }
 
 img {
     display: block;
-    max-width: 100%;
 }
 
 .container {

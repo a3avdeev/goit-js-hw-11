@@ -8,7 +8,6 @@ const input = document.querySelector('input');
 const gallery = document.querySelector('.gallery');
 const loadMore = document.querySelector('.load-more');
 
-let inputValue = '';
 let page = 1;
 let perPage = 40;
 
@@ -25,7 +24,7 @@ const createList = async data => {
         downloads,
       }) => `<div class="photo-card">
         <a class="gallery_item" href="${largeImageURL}">
-          <img src="${webformatURL}" width="320" heigth="210" alt="${tags}" loading="lazy" />
+          <img src="${webformatURL}" width="320" heigth="220" alt="${tags}" loading="lazy" />
           <div class="info">
             <p class="info-item">
               <b>Likes </b> ${likes}
@@ -54,14 +53,14 @@ const createList = async data => {
 
   lightboxImg.refresh();
 
-  // const { height: cardHeight } = document
-  //   .querySelector('.gallery')
-  //   .firstElementChild.getBoundingClientRect();
+  const { height: cardHeight } = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
 
-  // window.scrollBy({
-  //   top: cardHeight * 2,
-  //   behavior: 'smooth',
-  // });
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
 };
 
 const onSearch = async event => {
@@ -78,6 +77,11 @@ const onSearch = async event => {
           Notiflix.Notify.failure(
             'Sorry, there are no images matching your search query. Please try again.'
           );
+        } else if (data?.hits.length < perPage) {
+          gallery.innerHTML = '';
+          createList(data);
+          Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
+          loadMore.style.display = 'none';
         } else {
           gallery.innerHTML = '';
           createList(data);
@@ -87,11 +91,12 @@ const onSearch = async event => {
       })
       .catch(error => console.log(error));
   } else {
-    Notiflix.Notify.info('Need something to write');
+    Notiflix.Notify.warning('Hey, come on! Need something to input!');
   }
 };
 
-const loadMoreFn = async () => {
+const loadMoreFn = async event => {
+  event.preventDefault();
   page += 1;
   fetchImages(inputValue, page, perPage)
     .then(data => {
@@ -100,6 +105,7 @@ const loadMoreFn = async () => {
         Notiflix.Notify.info(
           "We're sorry, but you've reached the end of search results."
         );
+        createList(data);
       } else {
         createList(data);
       }
