@@ -10,6 +10,7 @@ const loadMore = document.querySelector('.load-more');
 
 let page = 1;
 let perPage = 40;
+let inputValue = 'null';
 
 const createList = async data => {
   const result = data?.hits
