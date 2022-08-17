@@ -1,39 +1,16 @@
-import axios from 'axios';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import Notiflix from 'notiflix';
+import { fetchImages } from './fetchImages';
 
 const form = document.querySelector('#search-form');
 const input = document.querySelector('input');
 const gallery = document.querySelector('.gallery');
 const loadMore = document.querySelector('.load-more');
 
-const BASE_URL = 'https://pixabay.com/api/';
-const KEY = '29263852-decd32d0e53d5fbdcdddbb078';
+let inputValue = '';
 let page = 1;
 let perPage = 40;
-
-const getImages = async () => {
-  const inputValue = input.value.trim();
-
-  try {
-    const response = await axios.get(
-      `${BASE_URL}?key=${KEY}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${perPage}`
-    );
-    createList(response.data);
-    Notiflix.Notify.success(
-      `Hooray! We found ${response.data.totalHits} images.`
-    );
-
-    console.log(response);
-    console.log(response.data.hits);
-  } catch (error) {
-    console.log(error);
-    Notiflix.Notify.failure(
-      'Sorry, there are no images matching your search query. Please try again.'
-    );
-  }
-};
 
 const createList = async data => {
   const result = data?.hits
@@ -50,22 +27,20 @@ const createList = async data => {
         <a class="gallery_item" href="${largeImageURL}">
           <img src="${webformatURL}" width="320" heigth="210" alt="${tags}" loading="lazy" />
           <div class="info">
-          <p class="info-item">
-            <b>Likes </b> ${likes}
-          </p>
-          <p class="info-item">
-            <b>Views </b> ${views}
-          </p>
-          <p class="info-item">
-            <b>Comments </b> ${comments}
-          </p>
-          <p class="info-item">
-            <b>Downloads </b> ${downloads}
-          </p>
-        </div>
+            <p class="info-item">
+              <b>Likes </b> ${likes}
+            </p>
+            <p class="info-item">
+              <b>Views </b> ${views}
+            </p>
+            <p class="info-item">
+              <b>Comments </b> ${comments}
+            </p>
+            <p class="info-item">
+              <b>Downloads </b> ${downloads}
+            </p>
+          </div>
         </a>
-  
-        
       </div>`
     )
     .join('');
@@ -91,25 +66,45 @@ const createList = async data => {
 
 const onSearch = async event => {
   event.preventDefault();
-
   gallery.innerHTML = '';
-  const img = await getImages(input.value);
-  createList(img);
-  loadMore.style.display = 'grid';
+  page = 1;
+  inputValue = input.value.trim();
+
+  if (inputValue !== '') {
+    fetchImages(inputValue, page, perPage)
+      .then(data => {
+        if (data?.hits.length === 0) {
+          loadMore.style.display = 'none';
+          Notiflix.Notify.failure(
+            'Sorry, there are no images matching your search query. Please try again.'
+          );
+        } else {
+          gallery.innerHTML = '';
+          createList(data);
+          Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
+          loadMore.style.display = 'grid';
+        }
+      })
+      .catch(error => console.log(error));
+  } else {
+    Notiflix.Notify.info('Need something to write');
+  }
 };
 
-const loadMoreFn = async response => {
+const loadMoreFn = async () => {
   page += 1;
-  const img = await getImages(input.value);
-  await createList(img);
-
-  if (response.hits <= perPage) {
-    loadMore.style.display = 'none';
-    Notiflix.Notify.info(
-      "We're sorry, but you've reached the end of search results."
-    );
-    return;
-  }
+  fetchImages(inputValue, page, perPage)
+    .then(data => {
+      if (data?.hits.length < perPage) {
+        loadMore.style.display = 'none';
+        Notiflix.Notify.info(
+          "We're sorry, but you've reached the end of search results."
+        );
+      } else {
+        createList(data);
+      }
+    })
+    .catch(error => console.log(error));
 };
 
 form.addEventListener('submit', onSearch);
