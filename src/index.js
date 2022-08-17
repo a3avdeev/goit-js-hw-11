@@ -11,14 +11,14 @@ const loadMore = document.querySelector('.load-more');
 const BASE_URL = 'https://pixabay.com/api/';
 const KEY = '29263852-decd32d0e53d5fbdcdddbb078';
 let page = 1;
-loadMore.style.display = 'none';
+let perPage = 40;
 
 const getImages = async () => {
   const inputValue = input.value.trim();
 
   try {
     const response = await axios.get(
-      `${BASE_URL}?key=${KEY}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=40`
+      `${BASE_URL}?key=${KEY}&q=${inputValue}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${perPage}`
     );
     createList(response.data);
     Notiflix.Notify.success(
@@ -26,8 +26,12 @@ const getImages = async () => {
     );
 
     console.log(response);
+    console.log(response.data.hits);
   } catch (error) {
     console.log(error);
+    Notiflix.Notify.failure(
+      'Sorry, there are no images matching your search query. Please try again.'
+    );
   }
 };
 
@@ -44,19 +48,19 @@ const createList = async data => {
         downloads,
       }) => `<div class="photo-card">
         <a class="gallery_item" href="${largeImageURL}">
-          <img src="${webformatURL}" alt="${tags}" minwidth="370"  loading="lazy" />
+          <img src="${webformatURL}" width="320" heigth="210" alt="${tags}" loading="lazy" />
           <div class="info">
           <p class="info-item">
-            <b>Likes</b>${likes}
+            <b>Likes </b> ${likes}
           </p>
           <p class="info-item">
-            <b>Views</b>${views}
+            <b>Views </b> ${views}
           </p>
           <p class="info-item">
-            <b>Comments</b>${comments}
+            <b>Comments </b> ${comments}
           </p>
           <p class="info-item">
-            <b>Downloads</b>${downloads}
+            <b>Downloads </b> ${downloads}
           </p>
         </div>
         </a>
@@ -66,8 +70,6 @@ const createList = async data => {
     )
     .join('');
   gallery.insertAdjacentHTML('beforeend', result);
-
-  // Notiflix.Notify.success(`Hooray! We found ${data?.totalHits} images.`);
 
   const lightboxImg = new SimpleLightbox('.gallery a', {
     captionsData: 'alt',
@@ -87,18 +89,27 @@ const createList = async data => {
   // });
 };
 
-const loadMoreFn = async () => {
-  const img = await getImages(input.value);
-  await createList(img);
-  page += 1;
-};
-
 const onSearch = async event => {
   event.preventDefault();
-  loadMore.style.display = 'inline-block';
+
   gallery.innerHTML = '';
   const img = await getImages(input.value);
+  createList(img);
+  loadMore.style.display = 'grid';
+};
+
+const loadMoreFn = async response => {
+  page += 1;
+  const img = await getImages(input.value);
   await createList(img);
+
+  if (response.hits <= perPage) {
+    loadMore.style.display = 'none';
+    Notiflix.Notify.info(
+      "We're sorry, but you've reached the end of search results."
+    );
+    return;
+  }
 };
 
 form.addEventListener('submit', onSearch);

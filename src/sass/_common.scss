@@ -12,9 +12,18 @@ body {
     background-color: #fafafa;
     color: #212121;
     line-height: 1.5;
+    margin-left: 15px;
+    margin-right: 15px;
 }
 
 img {
     display: block;
     max-width: 100%;
+}
+
+.container {
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: auto;
+    margin-right: auto;
 }
